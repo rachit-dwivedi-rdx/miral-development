@@ -1,0 +1,270 @@
+import { useQuery } from '@tanstack/react-query';
+import { useRoute, useLocation } from 'wouter';
+import { ArrowLeft, Eye, Clock, MessageSquare, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
+import type { Session } from '@shared/schema';
+
+export default function Report() {
+  const [, params] = useRoute('/report/:id');
+  const [, setLocation] = useLocation();
+  const sessionId = params?.id;
+
+  const { data: session, isLoading } = useQuery<Session>({
+    queryKey: ['/api/sessions', sessionId],
+    enabled: !!sessionId,
+  });
+
+  const { data: allSessions } = useQuery<Session[]>({
+    queryKey: ['/api/sessions'],
+  });
+
+  if (isLoading) {
+    return (
+      <div className="container max-w-6xl mx-auto px-4 py-8">
+        <Skeleton className="h-8 w-48 mb-8" />
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-24 w-full" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (!sessionId) {
+    return (
+      <div className="container max-w-6xl mx-auto px-4 py-8">
+        <div className="text-center py-16">
+          <h2 className="text-2xl font-semibold mb-2">Invalid Session</h2>
+          <p className="text-muted-foreground mb-4">No session ID provided.</p>
+          <Button onClick={() => setLocation('/dashboard')}>Go to Dashboard</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="container max-w-6xl mx-auto px-4 py-8">
+        <div className="text-center py-16">
+          <h2 className="text-2xl font-semibold mb-2">Session Not Found</h2>
+          <p className="text-muted-foreground mb-4">The session you're looking for doesn't exist.</p>
+          <Button onClick={() => setLocation('/dashboard')}>Go to Dashboard</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const previousSessions = allSessions?.filter(s => s.id !== session.id) || [];
+  const avgPreviousScore = previousSessions.length > 0
+    ? Math.round(previousSessions.reduce((sum, s) => sum + s.confidenceScore, 0) / previousSessions.length)
+    : null;
+  const avgPreviousEyeContact = previousSessions.length > 0
+    ? Math.round(previousSessions.reduce((sum, s) => sum + s.eyeContactPercentage, 0) / previousSessions.length)
+    : null;
+  const avgPreviousWPM = previousSessions.length > 0
+    ? Math.round(previousSessions.reduce((sum, s) => sum + s.wordsPerMinute, 0) / previousSessions.length)
+    : null;
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s`;
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-chart-2';
+    if (score >= 60) return 'text-chart-4';
+    return 'text-chart-5';
+  };
+
+  return (
+    <div className="container max-w-6xl mx-auto px-4 py-8">
+      <Button
+        variant="ghost"
+        className="gap-2 mb-6"
+        onClick={() => setLocation('/dashboard')}
+        data-testid="button-back"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Dashboard
+      </Button>
+
+      <div className="space-y-8">
+        <div>
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <div>
+              <h1 className="text-4xl font-semibold mb-2">{session.topic || 'Practice Session'}</h1>
+              <p className="text-muted-foreground">
+                {new Date(session.createdAt).toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </p>
+            </div>
+            <div className="text-center">
+              <div className={`text-6xl font-bold ${getScoreColor(session.confidenceScore)}`} data-testid="text-confidence-score">
+                {session.confidenceScore}
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">Confidence Score</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Eye Contact</CardTitle>
+                <Eye className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{session.eyeContactPercentage}%</div>
+                <Progress value={session.eyeContactPercentage} className="mt-2" />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Speaking Pace</CardTitle>
+                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{session.wordsPerMinute}</div>
+                <p className="text-xs text-muted-foreground mt-1">words per minute</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Filler Words</CardTitle>
+                <AlertCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{session.fillerWordsCount}</div>
+                <p className="text-xs text-muted-foreground mt-1">total count</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Duration</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatDuration(session.duration)}</div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {session.transcript && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Transcript</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-sm max-w-none dark:prose-invert">
+                <p className="leading-relaxed text-foreground whitespace-pre-wrap" data-testid="text-transcript">
+                  {session.transcript}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-chart-2" />
+                Strengths
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {session.strengths.map((strength, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <CheckCircle className="h-4 w-4 text-chart-2 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">{strength}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-chart-4" />
+                Areas for Improvement
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {session.improvements.map((improvement, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-chart-4 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">{improvement}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+
+        {previousSessions.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Comparison with Previous Sessions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4 text-sm font-medium border-b pb-2">
+                  <div>Metric</div>
+                  <div className="text-center">This Session</div>
+                  <div className="text-center">Previous Average</div>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-4 text-sm items-center">
+                  <div>Confidence Score</div>
+                  <div className="text-center font-medium">{session.confidenceScore}</div>
+                  <div className="text-center font-medium">{avgPreviousScore}</div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 text-sm items-center">
+                  <div>Eye Contact</div>
+                  <div className="text-center font-medium">{session.eyeContactPercentage}%</div>
+                  <div className="text-center font-medium">{avgPreviousEyeContact}%</div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 text-sm items-center">
+                  <div>Speaking Pace</div>
+                  <div className="text-center font-medium">{session.wordsPerMinute} WPM</div>
+                  <div className="text-center font-medium">{avgPreviousWPM} WPM</div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 text-sm items-center">
+                  <div>Filler Words</div>
+                  <div className="text-center font-medium">{session.fillerWordsCount}</div>
+                  <div className="text-center font-medium">
+                    {Math.round(previousSessions.reduce((sum, s) => sum + s.fillerWordsCount, 0) / previousSessions.length)}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
