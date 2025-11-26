@@ -125,49 +125,48 @@ export default function Report() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Eye Contact</CardTitle>
-                <Eye className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{session.eyeContactPercentage}%</div>
-                <Progress value={session.eyeContactPercentage} className="mt-2" />
-              </CardContent>
-            </Card>
+          <Card className="border-2 border-green-500/20">
+            <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium">Eye Contact</CardTitle>
+              <Eye className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl sm:text-2xl font-bold text-green-600">{session.eyeContactPercentage}%</div>
+              <Progress value={session.eyeContactPercentage} className="mt-2 h-1" />
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Speaking Pace</CardTitle>
-                <MessageSquare className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{session.wordsPerMinute}</div>
-                <p className="text-xs text-muted-foreground mt-1">words per minute</p>
-              </CardContent>
-            </Card>
+          <Card className="border-2 border-blue-500/20">
+            <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium">Pace</CardTitle>
+              <MessageSquare className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl sm:text-2xl font-bold text-blue-600">{session.wordsPerMinute}</div>
+              <p className="text-xs text-muted-foreground mt-1">WPM</p>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Filler Words</CardTitle>
-                <AlertCircle className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{session.fillerWordsCount}</div>
-                <p className="text-xs text-muted-foreground mt-1">total count</p>
-              </CardContent>
-            </Card>
+          <Card className="border-2 border-amber-500/20">
+            <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium">Fillers</CardTitle>
+              <AlertCircle className="h-4 w-4 text-amber-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl sm:text-2xl font-bold text-amber-600">{session.fillerWordsCount}</div>
+              <p className="text-xs text-muted-foreground mt-1">count</p>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Duration</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatDuration(session.duration)}</div>
-              </CardContent>
-            </Card>
-          </div>
+          <Card className="border-2 border-purple-500/20">
+            <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium">Duration</CardTitle>
+              <Clock className="h-4 w-4 text-purple-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl sm:text-2xl font-bold text-purple-600">{formatDuration(session.duration)}</div>
+            </CardContent>
+          </Card>
         </div>
 
         {session.transcript && (
@@ -267,6 +266,7 @@ export default function Report() {
             </CardContent>
           </Card>
         )}
+        </div>
       </div>
     </div>
   );
