@@ -12,6 +12,11 @@ import { detectFaces, calculateEyeContact, loadFaceDetector } from '@/lib/face-d
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 
+interface FeedbackAlert {
+  message: string;
+  type: 'warning' | 'success' | 'info';
+}
+
 export default function Practice() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -24,9 +29,10 @@ export default function Practice() {
   const [duration, setDuration] = useState(0);
   const [eyeContactData, setEyeContactData] = useState<{ timestamp: number; hasEyeContact: boolean }[]>([]);
   const [currentEyeContact, setCurrentEyeContact] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [feedbackAlerts, setFeedbackAlerts] = useState<FeedbackAlert[]>([]);
   const [poorEyeContactCount, setPoorEyeContactCount] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
+  const [sessionStartTime, setSessionStartTime] = useState<number>(0);
 
   useEffect(() => {
     loadFaceDetector().then(() => setIsModelLoading(false));
@@ -58,8 +64,8 @@ export default function Practice() {
             setPoorEyeContactCount(prev => {
               const newCount = prev + 1;
               if (newCount === 5) {
-                setFeedbackMessage("Maintain eye contact");
-                setTimeout(() => setFeedbackMessage(null), 3000);
+                setFeedbackAlerts(prev => [...prev, { message: "👀 Look at the camera - maintain eye contact", type: 'warning' }]);
+                setTimeout(() => setFeedbackAlerts(prev => prev.slice(1)), 4000);
                 return 0;
               }
               return newCount;
@@ -95,12 +101,14 @@ export default function Practice() {
       
       const data = await response.json();
       setSessionId(data.id);
+      setSessionStartTime(Date.now());
       await startRecording();
       setDuration(0);
       setEyeContactData([]);
+      setFeedbackAlerts([]);
       toast({
-        title: "Session Started",
-        description: "Good luck with your practice!",
+        title: "Session Started! 🎬",
+        description: "Maintain eye contact and speak naturally. You've got this!",
       });
     } catch (error) {
       toast({
@@ -179,12 +187,13 @@ export default function Practice() {
     : 0;
 
   return (
-    <div className="container max-w-7xl mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-background via-card to-background">
+      <div className="container max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+          <Card className="border-2 border-primary/10">
+            <CardContent className="p-3 sm:p-6">
+              <div className="relative aspect-video bg-gradient-to-br from-muted to-muted/50 rounded-lg overflow-hidden shadow-xl">
                 {webcamError && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-muted">
                     <p className="text-destructive font-medium mb-2">Camera Access Required</p>
@@ -204,11 +213,18 @@ export default function Practice() {
                   className="w-full h-full object-cover"
                   data-testid="video-webcam"
                 />
-                {feedbackMessage && (
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-6 py-3 bg-primary text-primary-foreground rounded-full shadow-lg animate-in slide-in-from-bottom-4">
-                    {feedbackMessage}
+                {feedbackAlerts.map((alert, idx) => (
+                  <div
+                    key={idx}
+                    className={`absolute bottom-4 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-lg animate-in slide-in-from-bottom-4 text-sm font-medium ${
+                      alert.type === 'warning' ? 'bg-amber-500 text-white' : 
+                      alert.type === 'success' ? 'bg-green-500 text-white' :
+                      'bg-blue-500 text-white'
+                    }`}
+                  >
+                    {alert.message}
                   </div>
-                )}
+                ))}
                 {isRecording && (
                   <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-2 bg-destructive text-destructive-foreground rounded-full">
                     <div className="h-2 w-2 rounded-full bg-white animate-pulse" />
@@ -220,32 +236,33 @@ export default function Practice() {
           </Card>
 
           <Card>
-            <CardContent className="p-6">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col items-center justify-between gap-3 sm:gap-4">
                 {!isRecording ? (
                   <div className="flex-1 w-full space-y-2">
-                    <Label htmlFor="topic">Session Topic</Label>
+                    <Label htmlFor="topic" className="text-sm font-semibold">What will you practice today?</Label>
                     <Input
                       id="topic"
-                      placeholder="e.g., Product Demo, Interview Practice, Sales Pitch"
+                      placeholder="e.g., Job Interview, Product Pitch, Wedding Toast"
                       value={topic}
                       onChange={(e) => setTopic(e.target.value)}
                       disabled={isModelLoading}
+                      className="text-base"
                       data-testid="input-topic"
                     />
                   </div>
                 ) : (
-                  <div className="flex-1 flex items-center gap-4">
-                    <div className="font-mono text-3xl font-bold">
+                  <div className="flex-1 w-full flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+                    <div className="font-mono text-2xl sm:text-3xl font-bold tabular-nums bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                       {formatTime(duration)}
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      Topic: {topic}
+                    <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
+                      Topic: <span className="font-semibold text-foreground">{topic}</span>
                     </div>
                   </div>
                 )}
                 
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full sm:w-auto">
                   {!isRecording ? (
                     <Button
                       onClick={handleStart}
@@ -256,12 +273,12 @@ export default function Practice() {
                       {isModelLoading ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          Loading...
+                          <span className="hidden sm:inline">Loading...</span>
                         </>
                       ) : (
                         <>
                           <Video className="h-4 w-4" />
-                          Start
+                          <span className="hidden sm:inline">Start</span>
                         </>
                       )}
                     </Button>
@@ -269,19 +286,19 @@ export default function Practice() {
                     <Button
                       onClick={handleStop}
                       variant="destructive"
-                      className="gap-2 min-w-32"
+                      className="gap-2 sm:min-w-32 flex-1 sm:flex-initial"
                       disabled={isSaving}
                       data-testid="button-stop"
                     >
                       {isSaving ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          Saving...
+                          <span className="hidden sm:inline">Saving...</span>
                         </>
                       ) : (
                         <>
                           <Square className="h-4 w-4" />
-                          Stop
+                          <span className="hidden sm:inline">Stop</span>
                         </>
                       )}
                     </Button>
@@ -292,10 +309,13 @@ export default function Practice() {
           </Card>
         </div>
 
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Live Metrics</CardTitle>
+        <div className="space-y-4 sm:space-y-5">
+          <Card className="border-2 border-green-500/20">
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                <span className="inline-flex h-2 w-2 rounded-full bg-green-500" />
+                Live Metrics
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -336,21 +356,35 @@ export default function Practice() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Tips</CardTitle>
+          <Card className="border-2 border-blue-500/20">
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="text-base sm:text-lg">Pro Tips</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="text-sm space-y-2">
-                <p className="text-muted-foreground">• Look directly at the camera</p>
-                <p className="text-muted-foreground">• Speak clearly and at a steady pace</p>
-                <p className="text-muted-foreground">• Avoid filler words like "um" and "uh"</p>
-                <p className="text-muted-foreground">• Take deep breaths to stay calm</p>
+              <div className="text-xs sm:text-sm space-y-2.5">
+                <div className="flex gap-2">
+                  <span className="text-blue-500 font-bold">→</span>
+                  <p className="text-muted-foreground">Look directly at the camera lens</p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-blue-500 font-bold">→</span>
+                  <p className="text-muted-foreground">Speak at 130-160 words per minute</p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-blue-500 font-bold">→</span>
+                  <p className="text-muted-foreground">Minimize filler words (um, uh, like)</p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-blue-500 font-bold">→</span>
+                  <p className="text-muted-foreground">Breathe naturally and stay relaxed</p>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
     </div>
+    </div>
   );
 }
+

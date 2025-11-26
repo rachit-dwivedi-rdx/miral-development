@@ -88,40 +88,43 @@ export default function Report() {
   };
 
   return (
-    <div className="container max-w-6xl mx-auto px-4 py-8">
-      <Button
-        variant="ghost"
-        className="gap-2 mb-6"
-        onClick={() => setLocation('/dashboard')}
-        data-testid="button-back"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Dashboard
-      </Button>
+    <div className="min-h-screen bg-gradient-to-br from-background via-card to-background">
+      <div className="container max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <Button
+          variant="ghost"
+          className="gap-2 mb-4 sm:mb-6"
+          onClick={() => setLocation('/dashboard')}
+          data-testid="button-back"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className="hidden sm:inline">Back to Dashboard</span>
+          <span className="sm:hidden">Back</span>
+        </Button>
 
-      <div className="space-y-8">
-        <div>
-          <div className="flex items-center justify-between gap-4 mb-4">
+        <div className="space-y-6 sm:space-y-8">
+        <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-4 sm:p-8 rounded-lg border border-primary/20 mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-4xl font-semibold mb-2">{session.topic || 'Practice Session'}</h1>
-              <p className="text-muted-foreground">
+              <h1 className="text-2xl sm:text-4xl font-bold mb-1 sm:mb-2">{session.topic || 'Practice Session'}</h1>
+              <p className="text-xs sm:text-base text-muted-foreground">
                 {new Date(session.createdAt).toLocaleDateString('en-US', {
-                  weekday: 'long',
+                  weekday: 'short',
                   year: 'numeric',
-                  month: 'long',
+                  month: 'short',
                   day: 'numeric',
-                })}
+                })} at {new Date(session.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
             <div className="text-center">
-              <div className={`text-6xl font-bold ${getScoreColor(session.confidenceScore)}`} data-testid="text-confidence-score">
+              <div className={`text-4xl sm:text-6xl font-bold ${getScoreColor(session.confidenceScore)}`} data-testid="text-confidence-score">
                 {session.confidenceScore}
               </div>
-              <p className="text-sm text-muted-foreground mt-1">Confidence Score</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">Confidence</p>
             </div>
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Eye Contact</CardTitle>
