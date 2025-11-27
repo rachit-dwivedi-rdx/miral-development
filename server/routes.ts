@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
+import bcrypt from "bcryptjs";
 import { storage } from "./storage";
 import { transcribeAudio } from "./openai";
 import {
@@ -15,10 +16,46 @@ import fs from "fs/promises";
 const upload = multer({ dest: "uploads/" });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Auth Routes
+  app.post("/api/auth/signup", async (req, res) => {
+    try {
+      const { email, password, name } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password required' });
+      }
+      const existingUser = await storage.getUser(email);
+      if (existingUser) {
+        return res.status(400).json({ error: 'Email already registered' });
+      }
+      const user = await storage.createUser(email, password, name);
+      res.json({ user: { id: user.id, email: user.email, name: user.name } });
+    } catch (error: any) {
+      console.error('Error in signup:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password required' });
+      }
+      const user = await storage.getUser(email);
+      if (!user || !(await bcrypt.compare(password, user.password))) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+      res.json({ user: { id: user.id, email: user.email, name: user.name } });
+    } catch (error: any) {
+      console.error('Error in login:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.post("/api/sessions", async (req, res) => {
     try {
-      const { topic } = req.body;
-      const session = await storage.createSession(topic || 'Untitled Session');
+      const { topic, userId } = req.body;
+      const session = await storage.createSession(topic || 'Untitled Session', userId);
       res.json(session);
     } catch (error: any) {
       console.error('Error creating session:', error);
@@ -28,7 +65,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/sessions", async (req, res) => {
     try {
-      const sessions = await storage.getAllSessions();
+      const { userId } = req.query;
+      const sessions = await storage.getAllSessions(userId as string | undefined);
       res.json(sessions);
     } catch (error: any) {
       console.error('Error fetching sessions:', error);

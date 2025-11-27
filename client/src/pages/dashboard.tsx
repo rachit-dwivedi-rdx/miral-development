@@ -9,8 +9,13 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
+  const userId = localStorage.getItem('userId');
   const { data: sessions, isLoading } = useQuery<Session[]>({
-    queryKey: ['/api/sessions'],
+    queryKey: ['/api/sessions', userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/sessions?userId=${userId}`);
+      return response.json();
+    },
   });
 
   if (isLoading) {

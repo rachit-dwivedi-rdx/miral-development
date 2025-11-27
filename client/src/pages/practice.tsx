@@ -91,10 +91,11 @@ export default function Practice() {
     }
 
     try {
+      const userId = localStorage.getItem('userId');
       const response = await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic }),
+        body: JSON.stringify({ topic, userId }),
       });
       
       if (!response.ok) throw new Error('Failed to create session');
