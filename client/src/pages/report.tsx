@@ -86,9 +86,19 @@ export default function Report() {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-chart-2';
-    if (score >= 60) return 'text-chart-4';
-    return 'text-chart-5';
+    if (score >= 80) return 'text-green-600';
+    if (score >= 60) return 'text-blue-600';
+    return 'text-orange-600';
+  };
+
+  const getPostureColor = (posture?: string) => {
+    if (!posture) return 'text-gray-600';
+    switch (posture) {
+      case 'good': return 'text-green-600';
+      case 'slouching': return 'text-amber-600';
+      case 'leaning': return 'text-orange-600';
+      default: return 'text-gray-600';
+    }
   };
 
   return (

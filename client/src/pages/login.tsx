@@ -36,15 +36,30 @@ export default function Login() {
       }
 
       const data = await response.json();
-      localStorage.setItem('userId', data.user.id);
-      localStorage.setItem('userName', data.user.name || data.user.email);
 
-      toast({
-        title: isLogin ? 'Welcome Back!' : 'Account Created!',
-        description: isLogin ? 'Logged in successfully' : 'Welcome to MIRAL',
-      });
-
-      setLocation('/dashboard');
+      if (isLogin) {
+        // Login successful - store user and redirect to dashboard
+        localStorage.setItem('userId', data.user.id);
+        localStorage.setItem('userName', data.user.name || data.user.email);
+        
+        toast({
+          title: 'Welcome Back!',
+          description: 'Logged in successfully',
+        });
+        
+        setLocation('/dashboard');
+      } else {
+        // Signup successful - show message and redirect to login
+        toast({
+          title: 'Account Created!',
+          description: 'Your account has been created. Please log in to continue.',
+        });
+        
+        // Switch to login view
+        setIsLogin(true);
+        // Clear form
+        setFormData({ email: '', password: '', name: '' });
+      }
     } catch (error: any) {
       toast({
         title: 'Error',

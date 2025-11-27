@@ -16,12 +16,10 @@ import LearningResources from "@/pages/learning-resources";
 import NotFound from "@/pages/not-found";
 
 function Router() {
-  const [location] = useLocation();
   const userId = localStorage.getItem('userId');
-  const isAuthPage = location === '/login';
-  const isProtected = ['/dashboard', '/report', '/profile'].some(path => location.startsWith(path));
 
-  if (isAuthPage || (!userId && isProtected)) {
+  // If not logged in, show only login
+  if (!userId) {
     return (
       <Switch>
         <Route path="/login" component={Login} />
@@ -30,14 +28,15 @@ function Router() {
     );
   }
 
+  // If logged in, show all protected pages
   return (
     <Switch>
-      <Route path="/" component={Practice} />
       <Route path="/login" component={Login} />
+      <Route path="/" component={Dashboard} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/practice" component={Practice} />
       <Route path="/report/:id" component={Report} />
       <Route path="/profile" component={Profile} />
-      <Route path="/practice" component={Practice} />
       <Route path="/scenarios" component={Scenarios} />
       <Route path="/learning" component={LearningResources} />
       <Route component={NotFound} />
@@ -47,6 +46,7 @@ function Router() {
 
 function App() {
   const [location] = useLocation();
+  const userId = localStorage.getItem('userId');
   const isAuthPage = location === '/login';
 
   return (
@@ -54,7 +54,7 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <div className="min-h-screen bg-background">
-            {!isAuthPage && <Navigation />}
+            {userId && !isAuthPage && <Navigation />}
             <Router />
           </div>
           <Toaster />

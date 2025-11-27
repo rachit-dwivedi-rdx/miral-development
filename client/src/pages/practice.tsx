@@ -123,6 +123,9 @@ export default function Practice() {
       await startRecording();
       setDuration(0);
       setEyeContactData([]);
+      setPostureData([]);
+      setCurrentPosture('unknown');
+      setPostureScore(0);
       setFeedbackAlerts([]);
       toast({
         title: "Session Started! 🎬",
@@ -147,6 +150,7 @@ export default function Practice() {
       formData.append('audio', audioBlob, 'recording.webm');
       formData.append('duration', duration.toString());
       formData.append('eyeContactData', JSON.stringify(eyeContactData));
+      formData.append('postureData', JSON.stringify(postureData));
 
       const response = await fetch(`/api/sessions/${sessionId}/complete`, {
         method: 'POST',
