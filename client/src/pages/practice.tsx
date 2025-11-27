@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useWebcam } from '@/hooks/use-webcam';
 import { useAudioRecorder } from '@/hooks/use-audio-recorder';
 import { detectFaces, calculateEyeContact, loadFaceDetector } from '@/lib/face-detection';
+import { analyzePosture, loadPostureDetector, getPostureColor } from '@/lib/posture-detection';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 
@@ -33,9 +34,15 @@ export default function Practice() {
   const [poorEyeContactCount, setPoorEyeContactCount] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [sessionStartTime, setSessionStartTime] = useState<number>(0);
+  const [postureScore, setPostureScore] = useState(0);
+  const [currentPosture, setCurrentPosture] = useState('unknown');
+  const [postureData, setPostureData] = useState<{ timestamp: number; posture: string; confidence: number }[]>([]);
 
   useEffect(() => {
-    loadFaceDetector().then(() => setIsModelLoading(false));
+    Promise.all([
+      loadFaceDetector(),
+      loadPostureDetector(),
+    ]).then(() => setIsModelLoading(false));
   }, []);
 
   useEffect(() => {
@@ -56,9 +63,13 @@ export default function Practice() {
         if (videoRef.current) {
           const faces = await detectFaces(videoRef.current);
           const hasEyeContact = calculateEyeContact(faces);
+          const posture = await analyzePosture(videoRef.current);
           
           setCurrentEyeContact(hasEyeContact);
           setEyeContactData(prev => [...prev, { timestamp: duration, hasEyeContact }]);
+          setCurrentPosture(posture.posture);
+          setPostureData(prev => [...prev, { timestamp: duration, posture: posture.posture, confidence: posture.confidence }]);
+          setPostureScore(posture.confidence);
           
           if (!hasEyeContact) {
             setPoorEyeContactCount(prev => {
@@ -72,6 +83,12 @@ export default function Practice() {
             });
           } else {
             setPoorEyeContactCount(0);
+          }
+
+          if (posture.improvements.length > 0 && Math.random() < 0.3) {
+            const suggestion = posture.improvements[0];
+            setFeedbackAlerts(prev => [...prev, { message: suggestion, type: 'info' }]);
+            setTimeout(() => setFeedbackAlerts(prev => prev.slice(1)), 3000);
           }
         }
       }, 1000);
@@ -334,6 +351,24 @@ export default function Practice() {
                 </div>
                 <div className="text-xs text-muted-foreground text-right">
                   {eyeContactPercentage}%
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Posture</span>
+                  <Badge className={`capitalize ${currentPosture === 'good' ? 'bg-green-500/20 text-green-700' : currentPosture === 'slouching' ? 'bg-amber-500/20 text-amber-700' : 'bg-gray-500/20 text-gray-700'}`}>
+                    {currentPosture}
+                  </Badge>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 ${currentPosture === 'good' ? 'bg-green-500' : currentPosture === 'slouching' ? 'bg-amber-500' : 'bg-gray-500'}`}
+                    style={{ width: `${postureScore}%` }}
+                  />
+                </div>
+                <div className="text-xs text-muted-foreground text-right">
+                  {Math.round(postureScore)}%
                 </div>
               </div>
 

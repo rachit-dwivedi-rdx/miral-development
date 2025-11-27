@@ -16,6 +16,8 @@ export function Navigation() {
 
   const navItems = [
     { path: "/", label: "Practice", icon: Video },
+    { path: "/scenarios", label: "Scenarios", icon: LayoutDashboard },
+    { path: "/learning", label: "Learn", icon: LayoutDashboard },
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   ];
 

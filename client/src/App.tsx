@@ -11,6 +11,8 @@ import Dashboard from "@/pages/dashboard";
 import Report from "@/pages/report";
 import Login from "@/pages/login";
 import Profile from "@/pages/profile";
+import Scenarios from "@/pages/scenarios";
+import LearningResources from "@/pages/learning-resources";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -35,6 +37,9 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/report/:id" component={Report} />
       <Route path="/profile" component={Profile} />
+      <Route path="/practice" component={Practice} />
+      <Route path="/scenarios" component={Scenarios} />
+      <Route path="/learning" component={LearningResources} />
       <Route component={NotFound} />
     </Switch>
   );
