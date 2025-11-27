@@ -70,50 +70,52 @@ export async function analyzePosture(videoElement: HTMLVideoElement): Promise<Po
       };
     }
 
-    // Analyze shoulder alignment
+    // Analyze shoulder alignment - more lenient thresholds
     const shoulderDiff = Math.abs(leftShoulder.y - rightShoulder.y);
-    const shoulderAlignment = shoulderDiff < 20 ? 'aligned' : 'misaligned';
+    const shoulderAlignment = shoulderDiff < 35 ? 'aligned' : 'misaligned';
 
-    // Analyze head position
+    // Analyze head position relative to shoulders
     const earAvg = (leftEar.y + rightEar.y) / 2;
     const shoulderAvg = (leftShoulder.y + rightShoulder.y) / 2;
     const headDiff = earAvg - shoulderAvg;
     
     let headPosition: 'forward' | 'tilted' | 'backward' = 'forward';
-    if (headDiff > 50) headPosition = 'backward';
-    else if (headDiff < -30) headPosition = 'tilted';
+    if (headDiff > 80) headPosition = 'backward';
+    else if (headDiff < -50) headPosition = 'tilted';
     else headPosition = 'forward';
 
-    // Analyze back straightness
+    // Analyze back straightness - check vertical alignment of shoulders to hips
     const shoulderToHipAlignment = leftHip && rightHip
-      ? Math.abs((leftShoulder.y - leftHip.y) - (rightShoulder.y - rightHip.y)) < 30
+      ? Math.abs((leftShoulder.y - leftHip.y) - (rightShoulder.y - rightHip.y)) < 50
       : true;
     const backStraight = shoulderAlignment === 'aligned' && shoulderToHipAlignment;
 
-    // Determine overall posture
+    // Determine overall posture with improved confidence scoring
     let posture: 'good' | 'slouching' | 'leaning' | 'unknown' = 'good';
-    let confidence = 85;
+    let confidence = 90;
     const improvements: string[] = [];
 
+    // More forgiving scoring system
     if (!backStraight) {
       posture = 'slouching';
-      confidence -= 20;
+      confidence -= 15;
       improvements.push('Keep your back straight');
     }
 
     if (shoulderAlignment === 'misaligned') {
-      posture = shoulderDiff > 40 ? 'leaning' : 'slouching';
-      confidence -= 15;
+      posture = shoulderDiff > 50 ? 'leaning' : 'slouching';
+      confidence -= 12;
       improvements.push('Keep your shoulders level');
     }
 
     if (headPosition !== 'forward') {
-      confidence -= 10;
+      confidence -= 8;
       if (headPosition === 'tilted') improvements.push('Keep your head upright');
       if (headPosition === 'backward') improvements.push('Move your head slightly forward');
     }
 
-    confidence = Math.max(20, confidence);
+    // Higher minimum confidence
+    confidence = Math.max(60, confidence);
 
     return {
       posture,

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useRoute, useLocation } from 'wouter';
-import { ArrowLeft, Eye, Clock, MessageSquare, TrendingUp, CheckCircle, AlertCircle, Activity } from 'lucide-react';
+import { ArrowLeft, Eye, Clock, MessageSquare, TrendingUp, CheckCircle, AlertCircle, Activity, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -138,7 +138,7 @@ export default function Report() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4">
           <Card className="border-2 border-green-500/20">
             <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium">Eye Contact</CardTitle>
@@ -147,6 +147,17 @@ export default function Report() {
             <CardContent>
               <div className="text-xl sm:text-2xl font-bold text-green-600">{session.eyeContactPercentage}%</div>
               <Progress value={session.eyeContactPercentage} className="mt-2 h-1" />
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 border-teal-500/20">
+            <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium">Posture</CardTitle>
+              <Activity className="h-4 w-4 text-teal-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl sm:text-2xl font-bold text-teal-600">{session.postureScore || 0}%</div>
+              <Progress value={session.postureScore || 0} className="mt-2 h-1" />
             </CardContent>
           </Card>
 
@@ -275,6 +286,12 @@ export default function Report() {
                   <div className="text-center font-medium">
                     {Math.round(previousSessions.reduce((sum, s) => sum + s.fillerWordsCount, 0) / previousSessions.length)}
                   </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 text-sm items-center">
+                  <div>Posture Score</div>
+                  <div className="text-center font-medium">{session.postureScore || 0}%</div>
+                  <div className="text-center font-medium">{avgPreviousPosture || 'N/A'}%</div>
                 </div>
               </div>
             </CardContent>

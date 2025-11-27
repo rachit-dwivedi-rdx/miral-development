@@ -37,17 +37,30 @@ export function calculateEyeContact(faces: any[]): boolean {
   const face = faces[0];
   if (!face.keypoints) return false;
   
+  // Use more robust keypoint detection
   const leftEye = face.keypoints.find((kp: any) => kp.name === 'leftEye');
   const rightEye = face.keypoints.find((kp: any) => kp.name === 'rightEye');
-  const nose = face.keypoints.find((kp: any) => kp.name === 'noseTip');
+  const noseTip = face.keypoints.find((kp: any) => kp.name === 'noseTip');
+  const leftEyebrow = face.keypoints.find((kp: any) => kp.name === 'leftEyebrow');
   
-  if (!leftEye || !rightEye || !nose) return false;
+  if (!leftEye || !rightEye) return false;
   
+  // Check if face is looking towards camera (eyes should be roughly centered horizontally in face)
   const eyeCenterX = (leftEye.x + rightEye.x) / 2;
   const eyeCenterY = (leftEye.y + rightEye.y) / 2;
   
-  const horizontalDiff = Math.abs(eyeCenterX - nose.x);
-  const verticalDiff = Math.abs(eyeCenterY - nose.y);
+  // More lenient thresholds for better detection
+  if (noseTip) {
+    const horizontalDiff = Math.abs(eyeCenterX - noseTip.x);
+    const verticalDiff = Math.abs(eyeCenterY - noseTip.y);
+    // Relaxed from 30/40 to 60/80 for better accuracy
+    return horizontalDiff < 60 && verticalDiff < 80;
+  }
   
-  return horizontalDiff < 30 && verticalDiff < 40;
+  // Fallback: check if both eyes are visible and face appears forward
+  const eyeDistance = Math.abs(rightEye.x - leftEye.x);
+  const verticalAlignment = Math.abs(rightEye.y - leftEye.y);
+  
+  // Eyes should be roughly at same height and reasonable distance apart
+  return eyeDistance > 30 && verticalAlignment < 20;
 }
