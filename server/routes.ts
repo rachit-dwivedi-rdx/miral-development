@@ -112,6 +112,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (req.file) await fs.unlink(req.file.path).catch(() => {});
         return res.status(400).json({ error: 'Invalid eyeContactData format' });
       }
+
+      let postureData: { timestamp: number; posture: string; confidence: number }[] = [];
+      try {
+        postureData = JSON.parse(req.body.postureData || '[]');
+        if (!Array.isArray(postureData)) {
+          throw new Error('postureData must be an array');
+        }
+      } catch (error) {
+        if (req.file) await fs.unlink(req.file.path).catch(() => {});
+        return res.status(400).json({ error: 'Invalid postureData format' });
+      }
       
       const session = await storage.getSession(id);
       if (!session) {
@@ -174,12 +185,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fillerWordsCount
       );
 
+      const postureScore = postureData.length > 0
+        ? Math.round(postureData.reduce((sum, p) => sum + p.confidence, 0) / postureData.length)
+        : 0;
+
       const updatedSession = await storage.updateSession(id, {
         duration,
         eyeContactPercentage,
         confidenceScore,
         wordsPerMinute,
         fillerWordsCount,
+        postureScore,
+        postureData,
         transcript: transcript || null,
         strengths,
         improvements,

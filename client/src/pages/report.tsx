@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useRoute, useLocation } from 'wouter';
-import { ArrowLeft, Eye, Clock, MessageSquare, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Eye, Clock, MessageSquare, TrendingUp, CheckCircle, AlertCircle, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -73,6 +73,10 @@ export default function Report() {
     : null;
   const avgPreviousWPM = previousSessions.length > 0
     ? Math.round(previousSessions.reduce((sum, s) => sum + s.wordsPerMinute, 0) / previousSessions.length)
+    : null;
+  
+  const avgPreviousPosture = previousSessions.length > 0
+    ? Math.round(previousSessions.reduce((sum, s) => sum + (s.postureScore || 0), 0) / previousSessions.length)
     : null;
 
   const formatDuration = (seconds: number) => {
