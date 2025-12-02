@@ -1,7 +1,7 @@
 MiralAI- BUild Confidence
 
 1. Clone the repository:
-  git clone https://github.com/rachit-dwivedi-rdx/miral.git
+  git clone (https://github.com/rachit-dwivedi-rdx/miral-development)
 
 2. Move into the project directory:
    cd MiralAIMirror
