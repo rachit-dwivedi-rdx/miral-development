@@ -10,13 +10,21 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const userId = localStorage.getItem('userId');
-  const { data: sessions, isLoading } = useQuery<Session[]>({
+  const { data: sessions, isLoading, error } = useQuery<Session[]>({
     queryKey: ['/api/sessions', userId],
     queryFn: async () => {
       const response = await fetch(`/api/sessions?userId=${userId}`);
-      return response.json();
+      if (!response.ok) {
+        throw new Error(`Failed to fetch sessions: ${response.statusText}`);
+      }
+      const data = await response.json();
+      // Ensure we always return an array
+      return Array.isArray(data) ? data : [];
     },
   });
+
+  // Ensure sessions is always an array
+  const sessionsArray = Array.isArray(sessions) ? sessions : [];
 
   if (isLoading) {
     return (
@@ -47,26 +55,26 @@ export default function Dashboard() {
     );
   }
 
-  const totalSessions = sessions?.length || 0;
-  const avgScore = sessions && sessions.length > 0
-    ? Math.round(sessions.reduce((sum, s) => sum + s.confidenceScore, 0) / sessions.length)
+  const totalSessions = sessionsArray.length;
+  const avgScore = sessionsArray.length > 0
+    ? Math.round(sessionsArray.reduce((sum, s) => sum + (s.confidenceScore || 0), 0) / sessionsArray.length)
     : 0;
-  const totalTime = sessions
-    ? Math.round(sessions.reduce((sum, s) => sum + s.duration, 0) / 60)
+  const totalTime = sessionsArray.length > 0
+    ? Math.round(sessionsArray.reduce((sum, s) => sum + (s.duration || 0), 0) / 60)
     : 0;
-  const lastSession = sessions && sessions.length > 0 ? sessions[0] : null;
-  const improvement = sessions && sessions.length >= 2
-    ? Math.round(sessions[0].confidenceScore - sessions[1].confidenceScore)
+  const lastSession = sessionsArray.length > 0 ? sessionsArray[0] : null;
+  const improvement = sessionsArray.length >= 2
+    ? Math.round((sessionsArray[0].confidenceScore || 0) - (sessionsArray[1].confidenceScore || 0))
     : 0;
 
-  const chartData = sessions
-    ?.slice(0, 10)
+  const chartData = sessionsArray
+    .slice(0, 10)
     .reverse()
     .map((session, index) => ({
-      name: `Session ${sessions.length - 9 + index}`,
-      score: session.confidenceScore,
+      name: `Session ${sessionsArray.length - 9 + index}`,
+      score: session.confidenceScore || 0,
       date: new Date(session.createdAt).toLocaleDateString(),
-    })) || [];
+    }));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-card to-background">
@@ -169,9 +177,19 @@ export default function Dashboard() {
 
         <div>
           <h2 className="text-2xl font-bold mb-4">📚 Recent Sessions</h2>
-          {sessions && sessions.length > 0 ? (
+          {error ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                <Video className="h-16 w-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Error Loading Sessions</h3>
+                <p className="text-muted-foreground mb-4">
+                  {error instanceof Error ? error.message : 'Failed to load sessions'}
+                </p>
+              </CardContent>
+            </Card>
+          ) : sessionsArray.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sessions.map((session, idx) => (
+              {sessionsArray.map((session, idx) => (
                 <Card
                   key={session.id}
                   className="hover-elevate cursor-pointer transition-all border-2 border-transparent hover:border-primary/20"

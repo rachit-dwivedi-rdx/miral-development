@@ -18,8 +18,21 @@ export function useWebcam() {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.onloadedmetadata = () => {
-            videoRef.current?.play();
-            setIsReady(true);
+            videoRef.current?.play().then(() => {
+              // Wait a bit to ensure video is actually playing
+              setTimeout(() => {
+                if (videoRef.current && videoRef.current.readyState >= 2) {
+                  setIsReady(true);
+                }
+              }, 100);
+            }).catch((err) => {
+              console.error('Error playing video:', err);
+              setError('Unable to play video stream.');
+            });
+          };
+          
+          videoRef.current.onerror = () => {
+            setError('Video stream error occurred.');
           };
         }
       } catch (err) {

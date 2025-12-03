@@ -31,8 +31,16 @@ export default function Login() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Authentication failed');
+        const error = await response.json().catch(() => ({ message: 'Authentication failed' }));
+        // Handle 422 validation errors
+        if (response.status === 422) {
+          const detail = error.detail || error.message || 'Invalid input data';
+          const errorMsg = Array.isArray(detail) 
+            ? detail.map((e: any) => `${e.loc?.join('.')}: ${e.msg}`).join('; ')
+            : detail;
+          throw new Error(errorMsg || 'Please check your input and try again');
+        }
+        throw new Error(error.message || error.detail || 'Authentication failed');
       }
 
       const data = await response.json();
